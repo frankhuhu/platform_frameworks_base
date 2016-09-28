@@ -49,6 +49,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import libcore.valera.ValeraConfig;
+
 /**
  * Base class for implementing application instrumentation code.  When running
  * with instrumentation turned on, this class will be instantiated for you
@@ -1168,6 +1170,11 @@ public class Instrumentation {
      * @param activity The activity being started.
      */
     public void callActivityOnStart(Activity activity) {
+    	/* valera begin */
+    	if (ValeraConfig.isValeraEnabled()) {
+    		Thread.currentThread().valeraLifecycle("onStart " + activity + " " + System.currentTimeMillis());
+    	}
+    	/* valera end */
         activity.onStart();
     }
 
@@ -1210,6 +1217,11 @@ public class Instrumentation {
      */
     public void callActivityOnStop(Activity activity) {
         activity.onStop();
+        /* valera begin */
+    	if (ValeraConfig.isValeraEnabled()) {
+    		Thread.currentThread().valeraLifecycle("onStop " + activity + " " + System.currentTimeMillis());
+    	}
+    	/* valera end */
     }
 
     /**

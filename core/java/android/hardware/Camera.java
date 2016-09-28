@@ -43,6 +43,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+import libcore.valera.ValeraConstant;
+
+import valera.ValeraGlobal;
+
 /**
  * The Camera class is used to set image capture settings, start/stop preview,
  * snap pictures, and retrieve frames for encoding for video.  This class is a
@@ -765,12 +769,28 @@ public class Camera {
             case CAMERA_MSG_RAW_IMAGE:
                 if (mRawImageCallback != null) {
                     mRawImageCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    /* valera begin */
+                    if (ValeraGlobal.getValeraMode() != libcore.valera.ValeraConstant.MODE_NONE) {
+                    	byte[] bytes = (byte[])msg.obj;
+                    	int len = bytes == null ? 0 : bytes.length;
+                    	libcore.valera.ValeraUtil.valeraDebugPrint(
+                    			String.format("Camera onPictureTaken(raw) byte[].len=%d\n", len));
+                    }
+                    /* valera end */
                 }
                 return;
 
             case CAMERA_MSG_COMPRESSED_IMAGE:
                 if (mJpegCallback != null) {
                     mJpegCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    /* valera begin */
+                    if (ValeraGlobal.getValeraMode() != libcore.valera.ValeraConstant.MODE_NONE) {
+                    	byte[] bytes = (byte[])msg.obj;
+                    	int len = bytes == null ? 0 : bytes.length;
+                    	libcore.valera.ValeraUtil.valeraDebugPrint(
+                    			String.format("Camera onPictureTaken(jpeg) byte[].len=%d\n", len));
+                    }
+                    /* valera end */
                 }
                 return;
 
@@ -789,12 +809,27 @@ public class Camera {
                         setHasPreviewCallback(true, false);
                     }
                     pCb.onPreviewFrame((byte[])msg.obj, mCamera);
+                    /* valera begin */
+                    if (ValeraGlobal.getValeraMode() != libcore.valera.ValeraConstant.MODE_NONE) {
+                    	libcore.valera.ValeraUtil.valeraDebugPrint(
+                    			String.format("Camera onPreviewFrame byte[].len=%d\n", 
+                    					((byte[])msg.obj).length));
+                    }
+                    /* valera end */
                 }
                 return;
 
             case CAMERA_MSG_POSTVIEW_FRAME:
                 if (mPostviewCallback != null) {
                     mPostviewCallback.onPictureTaken((byte[])msg.obj, mCamera);
+                    /* valera begin */
+                    if (ValeraGlobal.getValeraMode() != libcore.valera.ValeraConstant.MODE_NONE) {
+                    	byte[] bytes = (byte[])msg.obj;
+                    	int len = bytes == null ? 0 : bytes.length;
+                    	libcore.valera.ValeraUtil.valeraDebugPrint(
+                    			String.format("Camera onPictureTaken(postview) byte[].len=%d\n", len));
+                    }
+                    /* valera end */
                 }
                 return;
 
@@ -849,8 +884,28 @@ public class Camera {
             return;
 
         if (c.mEventHandler != null) {
-            Message m = c.mEventHandler.obtainMessage(what, arg1, arg2, obj);
-            c.mEventHandler.sendMessage(m);
+        	/* valera begin */
+            //Message m = c.mEventHandler.obtainMessage(what, arg1, arg2, obj);
+            //c.mEventHandler.sendMessage(m);
+            
+            switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE: {
+        		Message m = c.mEventHandler.obtainMessage(what, arg1, arg2, obj);
+                c.mEventHandler.sendMessage(m);
+        	}
+        	break;
+        	case ValeraConstant.MODE_RECORD: {
+        		valera.ValeraInputEventManager.getInstance()
+        			.recordCameraEvent(c, what, arg1, arg2, obj);
+        		Message m = c.mEventHandler.obtainMessage(what, arg1, arg2, obj);
+                c.mEventHandler.sendMessage(m);
+        	}
+        	break;
+        	case ValeraConstant.MODE_REPLAY:
+        		// TODO: impl replay.
+        	break;
+        	}
+            /* valera end */
         }
     }
 

@@ -115,6 +115,11 @@ import java.util.regex.Pattern;
 import libcore.io.DropBox;
 import libcore.io.EventLogger;
 import libcore.io.IoUtils;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+import valera.ValeraGlobal;
+import valera.ValeraHandler;
+/* valera end */
 
 import dalvik.system.CloseGuard;
 
@@ -1314,6 +1319,16 @@ public final class ActivityThread {
                     Trace.traceBegin(Trace.TRACE_TAG_ACTIVITY_MANAGER, "bindApplication");
                     AppBindData data = (AppBindData)msg.obj;
                     handleBindApplication(data);
+                    /* valera begin */
+                    // Start valera polling thread which periodically wakeup the looper
+                    // to check the input event.
+                    if (valera.ValeraGlobal.getValeraMode() == ValeraConstant.MODE_REPLAY) {
+                    	ValeraHandler vh = new ValeraHandler();
+                    	ValeraGlobal.setValeraHandler(vh);
+                    	vh.postNextWakeup();
+                    }
+                    //new valera.ValeraPollingThread(vh).start();
+                    /* valera end */
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
                     break;
                 case EXIT_APPLICATION:
@@ -1404,6 +1419,11 @@ public final class ActivityThread {
                     Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);
                     break;
                 case SUICIDE:
+                	/* valera begin */
+                	// Am force stop will call suicide. Got the chance to do some clean up work.
+                	System.out.println("yhu009: ActivityThread SUICIDE!");
+                	valera.ValeraGlobal.exitCleanUp();
+                	/* valera end */
                     Process.killProcess(Process.myPid());
                     break;
                 case REMOVE_PROVIDER:
@@ -2057,6 +2077,21 @@ public final class ActivityThread {
     public final Activity getActivity(IBinder token) {
         return mActivities.get(token).activity;
     }
+    
+    /* valera begin */
+    public Activity getActivityByName(String activity) {
+    	Activity result = null;
+    	for (Map.Entry<IBinder, ActivityClientRecord> entry : mActivities.entrySet()) {
+    		Activity a = entry.getValue().activity;
+    		if (a.getClass().getName().equals(activity)) {
+    			libcore.valera.ValeraUtil.valeraAssert(result == null, 
+    					"Multiple activity instances of " + activity);
+    			result = a;
+    		}
+    	}
+    	return result;
+    }
+    /* valera end */
 
     public final void sendActivityResult(
             IBinder token, String id, int requestCode,
@@ -5068,7 +5103,10 @@ public final class ActivityThread {
     }
 
     public static void main(String[] args) {
-        SamplingProfilerIntegration.start();
+    	/* valera begin */
+    	valera.ValeraGlobal.startupCheck();
+    	/* valera end */
+    	SamplingProfilerIntegration.start();
 
         // CloseGuard defaults to true and can be quite spammy.  We
         // disable it here, but selectively enable it later (via

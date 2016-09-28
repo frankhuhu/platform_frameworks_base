@@ -32,6 +32,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import libcore.valera.ValeraConstant;
+
+import valera.ValeraGlobal;
+
 import com.android.internal.location.ProviderProperties;
 
 /**
@@ -212,40 +216,149 @@ public class LocationManager {
 
         @Override
         public void onLocationChanged(Location location) {
-            Message msg = Message.obtain();
-            msg.what = TYPE_LOCATION_CHANGED;
-            msg.obj = location;
-            mListenerHandler.sendMessage(msg);
+        	/* valera begin */
+            // Message msg = Message.obtain();
+            // msg.what = TYPE_LOCATION_CHANGED;
+            // msg.obj = location;
+            // mListenerHandler.sendMessage(msg);
+            
+        	switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE: {
+        		Message msg = Message.obtain();
+                msg.what = TYPE_LOCATION_CHANGED;
+                msg.obj = location;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_RECORD: {
+        		valera.ValeraInputEventManager.getInstance()
+        			.recordOnLocationChanged(location);
+        		Message msg = Message.obtain();
+                msg.what = TYPE_LOCATION_CHANGED;
+                msg.obj = location;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_REPLAY:
+        		// TODO: impl replay.
+        	break;
+        	}
+            /* valera end */
         }
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            Message msg = Message.obtain();
-            msg.what = TYPE_STATUS_CHANGED;
-            Bundle b = new Bundle();
-            b.putString("provider", provider);
-            b.putInt("status", status);
-            if (extras != null) {
-                b.putBundle("extras", extras);
-            }
-            msg.obj = b;
-            mListenerHandler.sendMessage(msg);
+        	/* valera begin */
+            // Message msg = Message.obtain();
+            // msg.what = TYPE_STATUS_CHANGED;
+            // Bundle b = new Bundle();
+            // b.putString("provider", provider);
+            // b.putInt("status", status);
+            // if (extras != null) {
+            //     b.putBundle("extras", extras);
+            // }
+            // msg.obj = b;
+            // mListenerHandler.sendMessage(msg);
+            
+            switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE: {
+        		Message msg = Message.obtain();
+                msg.what = TYPE_STATUS_CHANGED;
+                Bundle b = new Bundle();
+                b.putString("provider", provider);
+                b.putInt("status", status);
+                if (extras != null) {
+                    b.putBundle("extras", extras);
+                }
+                msg.obj = b;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_RECORD: {
+        		valera.ValeraInputEventManager.getInstance()
+        			.recordOnStatusChanged(provider, status, extras);
+        		
+        		Message msg = Message.obtain();
+                msg.what = TYPE_STATUS_CHANGED;
+                Bundle b = new Bundle();
+                b.putString("provider", provider);
+                b.putInt("status", status);
+                if (extras != null) {
+                    b.putBundle("extras", extras);
+                }
+                msg.obj = b;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_REPLAY:
+        		// TODO: impl replay.
+        	break;
+        	}
+            /* valera end */
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            Message msg = Message.obtain();
-            msg.what = TYPE_PROVIDER_ENABLED;
-            msg.obj = provider;
-            mListenerHandler.sendMessage(msg);
+            /* valera begin */
+        	// Message msg = Message.obtain();
+            // msg.what = TYPE_PROVIDER_ENABLED;
+            // msg.obj = provider;
+            // mListenerHandler.sendMessage(msg);
+            
+            switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE: {
+        		Message msg = Message.obtain();
+                msg.what = TYPE_PROVIDER_ENABLED;
+                msg.obj = provider;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_RECORD: {
+        		valera.ValeraInputEventManager.getInstance()
+        			.recordOnProviderEnabled(provider);
+        		Message msg = Message.obtain();
+                msg.what = TYPE_PROVIDER_ENABLED;
+                msg.obj = provider;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_REPLAY:
+        		// TODO: impl replay.
+        	break;
+        	}
+            /* valera end */
         }
 
         @Override
         public void onProviderDisabled(String provider) {
-            Message msg = Message.obtain();
-            msg.what = TYPE_PROVIDER_DISABLED;
-            msg.obj = provider;
-            mListenerHandler.sendMessage(msg);
+            /* valera begin */
+        	// Message msg = Message.obtain();
+            // msg.what = TYPE_PROVIDER_DISABLED;
+            // msg.obj = provider;
+            // mListenerHandler.sendMessage(msg);
+            
+            switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE: {
+        		Message msg = Message.obtain();
+                msg.what = TYPE_PROVIDER_DISABLED;
+                msg.obj = provider;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_RECORD: {
+        		valera.ValeraInputEventManager.getInstance()
+        			.recordOnProviderDisabled(provider);
+        		Message msg = Message.obtain();
+                msg.what = TYPE_PROVIDER_DISABLED;
+                msg.obj = provider;
+                mListenerHandler.sendMessage(msg);
+        	}
+        	break;
+        	case ValeraConstant.MODE_REPLAY:
+        		// TODO: impl replay.
+        	break;
+        	}
+            /* valera end */
         }
 
         private void _handleMessage(Message msg) {

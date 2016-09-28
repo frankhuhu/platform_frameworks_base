@@ -378,6 +378,14 @@ public class Binder implements IBinder {
     // Entry point from android_util_Binder.cpp's onTransact
     private boolean execTransact(int code, int dataObj, int replyObj,
             int flags) {
+    	/* valera begin */
+    	Thread.currentThread().valeraBinderBegin(code, dataObj, replyObj, flags);
+    	Thread.currentThread().valeraDebugPrint(String.format(
+    			"binder=%s pid=%d uid=%d itf=%s", 
+    			this.toString(), this.getCallingPid(), this.getCallingUid(), 
+    			this.getInterfaceDescriptor()));
+    	/* valera end */
+    	
         Parcel data = Parcel.obtain(dataObj);
         Parcel reply = Parcel.obtain(replyObj);
         // theoretically, we should call transact, which will call onTransact,
@@ -402,6 +410,10 @@ public class Binder implements IBinder {
         }
         reply.recycle();
         data.recycle();
+        
+        /* valera begin */
+    	Thread.currentThread().valeraBinderEnd(code, dataObj, replyObj, flags);
+    	/* valera end */
         return res;
     }
 }

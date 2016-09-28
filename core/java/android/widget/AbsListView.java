@@ -72,6 +72,8 @@ import com.android.internal.R;
 import java.util.ArrayList;
 import java.util.List;
 
+import libcore.valera.ValeraUtil;
+
 /**
  * Base class that can be used to implement virtualized lists of items. A list does
  * not have a spatial definition here. For instance, subclases of this class can
@@ -4803,6 +4805,16 @@ public abstract class AbsListView extends AdapterView<ListAdapter> implements Te
     }
 
     private void clearScrollingCache() {
+    	/* valera begin */
+        Thread.currentThread().valeraDebugPrint(
+        		String.format("AbsListView.clearScrollingCache stack=%s",
+        				ValeraUtil.getCallingStack("#", 9)
+        		));
+        Thread.currentThread().valeraDebugPrint(
+        		String.format("AbsListView.clearScrollingCache %b %b",
+        				!isHardwareAccelerated(), mClearScrollingCache == null
+        		));
+        /* valera end */
         if (!isHardwareAccelerated()) {
             if (mClearScrollingCache == null) {
                 mClearScrollingCache = new Runnable() {

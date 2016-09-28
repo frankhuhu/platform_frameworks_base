@@ -4108,9 +4108,30 @@ public final class ActivityManagerService  extends ActivityManagerNative
                 mHandler.removeMessages(PROC_START_TIMEOUT_MSG, app);
             }
             Slog.i(TAG, "Killing proc " + app.toShortString() + ": " + reason);
+
+            /* valera begin */
+            boolean killSuccess = false;
+            if (app != null && app.thread != null) {
+            	try {
+            		app.thread.scheduleSuicide();
+            		killSuccess = true;
+            	} catch (RemoteException e) {
+            		Log.e(TAG, String.format("ScheduleSuicide Error: %s pid=%d",
+            				app.processName, app.pid));
+            	}
+            }
+            /* valera end */
+
             handleAppDiedLocked(app, true, allowRestart);
             mLruProcesses.remove(app);
-            Process.killProcessQuiet(pid);
+            /* valera begin */
+            // Let the app commit suicide so that the app get the chance of 
+            // doing some exit work. e.g. flush out valera trace buffer.
+            // Process.killProcessQuiet(pid);
+            if (!killSuccess) {
+            	Process.killProcessQuiet(pid);
+            }
+            /* valera end */
             
             if (app.persistent && !app.isolated) {
                 if (!callerWillRestart) {

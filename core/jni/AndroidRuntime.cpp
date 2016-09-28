@@ -27,6 +27,9 @@
 #include <utils/StringArray.h>
 #include <utils/threads.h>
 #include <cutils/properties.h>
+/* valera begin */
+#include <cutils/process_name.h>
+/* valera end */
 
 #include <SkGraphics.h>
 #include <SkImageDecoder.h>
@@ -803,6 +806,21 @@ void AndroidRuntime::start(const char* className, const char* options)
 {
     ALOGD("\n>>>>>> AndroidRuntime START %s <<<<<<\n",
             className != NULL ? className : "(unknown)");
+
+    /* valera begin */
+    /*
+    // Before Zygote start, clear the old dex loading log.
+    const char *process_name = get_process_name();
+    if (strcmp(process_name, "zygote") == 0) {
+        FILE *file = fopen("/data/local/zygote.dexload", "w");
+        if (file) {
+            ALOGI("Hi, I'm %s. I'm initializing zygote.dexload", get_process_name());
+            fprintf(file, "Zygote loading libraries.\n");
+            fclose(file);
+        }
+    }
+    */
+    /* valera end */
 
     blockSigpipe();
 

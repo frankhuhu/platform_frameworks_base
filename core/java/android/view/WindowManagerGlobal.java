@@ -33,6 +33,9 @@ import android.view.inputmethod.InputMethodManager;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+/* valera end */
 
 /**
  * Provides low-level communication with the system window manager for
@@ -182,6 +185,22 @@ public final class WindowManagerGlobal {
 
         return null;
     }
+    
+    /* valera begin */
+    public ViewRootImpl getRootViewImpl(int index) {
+    	/*
+    	libcore.valera.ValeraUtil.valeraAssert(0 <= index && index < mRoots.length, 
+    			String.format("Bad RootViewImpl index %d should between %d~%d",
+    					index, 0, mRoots.length));
+    	*/
+    	if (!(0 <= index && index < mRoots.length))
+    		return null;
+    	if (mRoots != null)
+    		return mRoots[index];
+    	else
+    		return null;
+    }
+    /* valera end */
 
     public void addView(View view, ViewGroup.LayoutParams params,
             Display display, Window parentWindow) {
@@ -262,6 +281,17 @@ public final class WindowManagerGlobal {
             mViews[index] = view;
             mRoots[index] = root;
             mParams[index] = wparams;
+            
+            /* valera begin */
+            // TODO: debug code
+            if (valera.ValeraGlobal.getValeraMode() != ValeraConstant.MODE_NONE)
+            	System.out.println(String.format(
+            		"yhu009: WindowManagerGlobal.addView index=%d length=%d",
+            		index, mRoots.length));
+            
+            root.setWindowManagerGlobalConfig(this, index);
+            Thread.currentThread().valeraDebugPrint("addView " + Integer.toHexString(this.hashCode()) + " " + index);
+            /* valera end */
         }
 
         // do this last because it fires off messages to start doing things
@@ -296,6 +326,11 @@ public final class WindowManagerGlobal {
             ViewRootImpl root = mRoots[index];
             mParams[index] = wparams;
             root.setLayoutParams(wparams, false);
+            
+            /* valera begin */
+            Thread.currentThread().valeraDebugPrint("updateViewLayout " + Integer.toHexString(this.hashCode()) + " " + index);
+            /* valera end */
+            
         }
     }
 
@@ -357,6 +392,21 @@ public final class WindowManagerGlobal {
             }
         }
         root.die(immediate);
+        
+        /* valera begin */
+        // TODO: debug code
+        if (valera.ValeraGlobal.getValeraMode() != ValeraConstant.MODE_NONE) {
+        	System.out.println(String.format(
+        		"yhu009: WindowManagerGlobal.removeView index=%d length=%d",
+        		index, mRoots.length));
+            Thread.currentThread().valeraDebugPrint("removeView " + Integer.toHexString(this.hashCode()) + " " + index);
+        }
+        // Update RootViewImpl index
+        for (int i = 0; i < mRoots.length; i++) {
+        	if (mRoots[i].mWMGIndex > index)
+        		mRoots[i].mWMGIndex--;
+        }
+        /* valera end */
 
         final int count = mViews.length;
 

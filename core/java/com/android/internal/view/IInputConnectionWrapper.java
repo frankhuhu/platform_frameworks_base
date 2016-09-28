@@ -29,6 +29,9 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 
 import java.lang.ref.WeakReference;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+/* valera end */
 
 public class IInputConnectionWrapper extends IInputContext.Stub {
     static final String TAG = "IInputConnectionWrapper";
@@ -111,7 +114,18 @@ public class IInputConnectionWrapper extends IInputContext.Stub {
     }
     
     public void commitText(CharSequence text, int newCursorPosition) {
-        dispatchMessage(obtainMessageIO(DO_COMMIT_TEXT, newCursorPosition, text));
+    	/* valera begin */
+    	switch (valera.ValeraGlobal.getValeraMode()) {
+    	case ValeraConstant.MODE_NONE:
+    		break;
+    	case ValeraConstant.MODE_RECORD:
+    		valera.ValeraInputEventManager.getInstance().recordIMCommitText(text, newCursorPosition);
+    		break;
+    	case ValeraConstant.MODE_REPLAY:
+    		break;
+    	}
+    	/* valera end */
+    	dispatchMessage(obtainMessageIO(DO_COMMIT_TEXT, newCursorPosition, text));
     }
 
     public void commitCompletion(CompletionInfo text) {
@@ -139,7 +153,7 @@ public class IInputConnectionWrapper extends IInputContext.Stub {
     }
 
     public void setComposingText(CharSequence text, int newCursorPosition) {
-        dispatchMessage(obtainMessageIO(DO_SET_COMPOSING_TEXT, newCursorPosition, text));
+    	dispatchMessage(obtainMessageIO(DO_SET_COMPOSING_TEXT, newCursorPosition, text));
     }
 
     public void finishComposingText() {

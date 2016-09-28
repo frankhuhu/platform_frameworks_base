@@ -20,6 +20,15 @@ import android.util.Log;
 import android.util.Printer;
 
 import java.lang.reflect.Modifier;
+/* valera begin */
+import java.util.concurrent.atomic.AtomicInteger;
+
+import valera.ValeraActionTracer;
+import valera.ValeraGlobal;
+import valera.ValeraHandler;
+import libcore.valera.ValeraUtil;
+/* valera end */
+
 
 /**
  * A Handler allows you to send and process {@link Message} and Runnable
@@ -88,16 +97,43 @@ public class Handler {
      * Handle system messages here.
      */
     public void dispatchMessage(Message msg) {
+    	/* valera begin */
+    	boolean doTracing = ValeraActionTracer.traceThisAction(msg);;
+    	int hCnt = 0;
+    	if (!msg.getTarget().getClass().getName().equals("valera.ValeraHandler")
+    			&& msg.what != ValeraHandler.WAKEUP_AND_CHECK) {
+    		hCnt = mMsgCount.incrementAndGet();
+    	}
+    	if (doTracing) {
+        	ValeraUtil.valeraDebugPrint("Enable tracing: " + msg.getTarget() + " " + msg.getCallback());
+        	Thread.currentThread().valeraSetTracing(true);
+        }
+    	valera.ValeraTrace.printActionBegin(msg, hCnt);
+    	/* valera end */
         if (msg.callback != null) {
             handleCallback(msg);
         } else {
             if (mCallback != null) {
                 if (mCallback.handleMessage(msg)) {
+                	/* valera begin */
+                	valera.ValeraTrace.printActionEnd(msg, hCnt);
+                	if (doTracing) {
+                    	ValeraUtil.valeraDebugPrint("Disable tracing: " + msg.getTarget() + " " + msg.getCallback());
+                    	Thread.currentThread().valeraSetTracing(false);
+                    }
+                	/* valera end */
                     return;
                 }
             }
             handleMessage(msg);
         }
+        /* valera begin */
+    	valera.ValeraTrace.printActionEnd(msg, hCnt);
+    	if (doTracing) {
+        	ValeraUtil.valeraDebugPrint("Disable tracing: " + msg.getTarget() + " " + msg.getCallback());
+        	Thread.currentThread().valeraSetTracing(false);
+        }
+    	/* valera end */
     }
 
     /**
@@ -200,6 +236,14 @@ public class Handler {
         mQueue = mLooper.mQueue;
         mCallback = callback;
         mAsynchronous = async;
+
+        /* valera begin */
+        mHandlerCount = getClass().incAndGetCounter();
+        //System.out.println(String.format("Handler (%s) Created %s",
+        //		this.getClass().getName(),
+        //		Integer.toHexString(this.hashCode())));
+        //System.out.println(libcore.valera.ValeraUtil.getCallingStack());
+        /* valera end */
     }
 
     /**
@@ -226,6 +270,14 @@ public class Handler {
         mQueue = looper.mQueue;
         mCallback = callback;
         mAsynchronous = async;
+
+        /* valera begin */
+        mHandlerCount = getClass().incAndGetCounter();
+        //System.out.println(String.format("Handler (%s) Created %s",
+        //		this.getClass().getName(),
+        //		Integer.toHexString(this.hashCode())));
+        //System.out.println(libcore.valera.ValeraUtil.getCallingStack());
+        /* valera end */
     }
 
     /**
@@ -680,6 +732,12 @@ public class Handler {
     public final Looper getLooper() {
         return mLooper;
     }
+    
+    /* valera begin */
+    public int getHandlerId() {
+    	return this.mMsgCount.get();
+    }
+    /* valera end */
 
     public final void dump(Printer pw, String prefix) {
         pw.println(prefix + this + " @ " + SystemClock.uptimeMillis());
@@ -692,9 +750,12 @@ public class Handler {
 
     @Override
     public String toString() {
-        return "Handler (" + getClass().getName() + ") {"
-        + Integer.toHexString(System.identityHashCode(this))
-        + "}";
+    	/* valera begin */
+    	//return "Handler (" + getClass().getName() + ") {"
+    	return getClass().getName() + ":" + mHandlerCount;
+    	//+ Integer.toHexString(System.identityHashCode(this))
+    	//+ "}";
+    	/* valera end */
     }
 
     final IMessenger getIMessenger() {
@@ -735,6 +796,12 @@ public class Handler {
     final Callback mCallback;
     final boolean mAsynchronous;
     IMessenger mMessenger;
+    /* valera begin */
+    // How many messages has been processed by this handler.
+    AtomicInteger mMsgCount = new AtomicInteger(0);
+    // The creation seq number of this handler.
+    int mHandlerCount;
+    /* valera end */
 
     private static final class BlockingRunnable implements Runnable {
         private final Runnable mTask;

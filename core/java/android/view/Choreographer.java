@@ -98,11 +98,17 @@ public final class Choreographer {
 
     // Enable/disable vsync for animations and drawing.
     private static final boolean USE_VSYNC = SystemProperties.getBoolean(
+    /* valera begin */
             "debug.choreographer.vsync", true);
+    		//"debug.choreographer.vsync", false);
+    /* valera end */
 
     // Enable/disable using the frame time instead of returning now.
     private static final boolean USE_FRAME_TIME = SystemProperties.getBoolean(
+    /* valera begin */
             "debug.choreographer.frametime", true);
+    		//"debug.choreographer.frametime", false);
+    /* valera end */
 
     // Set a limit to warn about skipped frames.
     // Skipped frames imply jank.

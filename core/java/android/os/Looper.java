@@ -16,9 +16,14 @@
 
 package android.os;
 
+import valera.ValeraEventScheduler;
+import valera.ValeraGlobal;
 import android.util.Log;
 import android.util.Printer;
 import android.util.PrefixPrinter;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+/* valera end */
 
 /**
   * Class used to run a message loop for a thread.  Threads by default do
@@ -121,24 +126,43 @@ public final class Looper {
         final long ident = Binder.clearCallingIdentity();
 
         for (;;) {
-            Message msg = queue.next(); // might block
-            if (msg == null) {
-                // No message indicates that the message queue is quitting.
-                return;
-            }
+        	/* valera begin */
+        	Message msg = null;
+        	boolean canExecuteMsg = true;
+        	
+        	msg = ValeraEventScheduler.checkPendingAction();
+        	
+        	// no pending message now, get message from queue.
+        	if (msg == null) {
+            /* valera end */
+        		msg = queue.next(); // might block
+        		if (msg == null) {
+        			// No message indicates that the message queue is quitting.
+        			return;
+        		}
+        	/* valera begin */
+        		canExecuteMsg = ValeraEventScheduler.canExecute(msg);
+        	}
+        	
+        	if (canExecuteMsg) {
+        	/* valera end */
 
-            // This must be in a local variable, in case a UI event sets the logger
-            Printer logging = me.mLogging;
-            if (logging != null) {
-                logging.println(">>>>> Dispatching to " + msg.target + " " +
-                        msg.callback + ": " + msg.what);
-            }
+        		// This must be in a local variable, in case a UI event sets the logger
+        		Printer logging = me.mLogging;
+        		if (logging != null) {
+        			logging.println(">>>>> Dispatching to " + msg.target + " " +
+        					msg.callback + ": " + msg.what);
+        		}
 
-            msg.target.dispatchMessage(msg);
+        		msg.target.dispatchMessage(msg);
 
-            if (logging != null) {
-                logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
-            }
+        		if (logging != null) {
+        			logging.println("<<<<< Finished to " + msg.target + " " + msg.callback);
+        		}
+            
+            /* valera begin */
+        	}
+            /* valera end */
 
             // Make sure that during the course of dispatching the
             // identity of the thread wasn't corrupted.
@@ -151,7 +175,20 @@ public final class Looper {
                         + msg.callback + " what=" + msg.what);
             }
 
-            msg.recycle();
+            /* valera begin */
+            if (canExecuteMsg)
+            /* valera end */
+            	msg.recycle();
+            
+			/* valera begin */
+            /*
+			if (me == sMainLooper
+					&& valera.ValeraGlobal.getValeraMode() == ValeraConstant.MODE_REPLAY) {
+				long now = SystemClock.uptimeMillis();
+				valera.ValeraInputEventManager.getInstance().replayExternalEvent(now);
+			}
+			*/
+			/* valera end */
         }
     }
 
@@ -189,6 +226,10 @@ public final class Looper {
         mQueue = new MessageQueue(quitAllowed);
         mRun = true;
         mThread = Thread.currentThread();
+        
+        /* valera begin */
+		valera.ValeraTrace.printAttachQ(mQueue.hashCode());
+		/* valera end */
     }
 
     /**

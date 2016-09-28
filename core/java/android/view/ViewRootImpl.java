@@ -317,6 +317,11 @@ public final class ViewRootImpl implements ViewParent,
 
     private int mViewLayoutDirectionInitial;
 
+    /* valera begin */
+    WindowManagerGlobal mWMG;
+    int mWMGIndex;
+    /* valera end */
+
     /**
      * Consistency verifier for debugging purposes.
      */
@@ -1125,6 +1130,11 @@ public final class ViewRootImpl implements ViewParent,
             System.out.println("performTraversals");
             host.debug();
         }
+        
+        /* valera begin */
+        Thread.currentThread().valeraDebugPrint("performTraversals");
+        /* valera end */
+        
 
         if (host == null || !mAdded)
             return;
@@ -3156,6 +3166,10 @@ public final class ViewRootImpl implements ViewParent,
                     TAG, "Dispatching key "
                     + msg.obj + " from IME to " + mView);
                 KeyEvent event = (KeyEvent)msg.obj;
+                
+                Log.i(TAG, "yhu009: Dispatching key " + event.getSequenceNumber()
+                		+ " from IME to " + mView);
+                
                 if ((event.getFlags()&KeyEvent.FLAG_FROM_SYSTEM) != 0) {
                     // The IME is trying to say this event is from the
                     // system!  Bad bad bad!
@@ -5483,6 +5497,9 @@ public final class ViewRootImpl implements ViewParent,
     }
     final TraversalRunnable mTraversalRunnable = new TraversalRunnable();
 
+    /* valera begin */
+    public
+    /* valera end */
     final class WindowInputEventReceiver extends InputEventReceiver {
         public WindowInputEventReceiver(InputChannel inputChannel, Looper looper) {
             super(inputChannel, looper);
@@ -5503,8 +5520,30 @@ public final class ViewRootImpl implements ViewParent,
             unscheduleConsumeBatchedInput();
             super.dispose();
         }
+        
+        /* valera begin */
+        @Override
+        public String toString () {
+        	ViewRootImpl root = ViewRootImpl.this;
+        	return String.format("%s wmg=%s index=%d",
+        			this.getClass().getName(), 
+        			Integer.toHexString(System.identityHashCode(root.mWMG)), 
+        			root.mWMGIndex);
+        }
+        
+        public int getWindowIndex() {
+        	ViewRootImpl root = ViewRootImpl.this;
+        	return root.mWMGIndex;
+        }
+        /* valera end */
     }
     WindowInputEventReceiver mInputEventReceiver;
+
+    /* valera begin */
+    public InputEventReceiver getInputEventReceiver() {
+    	return mInputEventReceiver;
+    }
+    /* valera end */
 
     final class ConsumeBatchedInputRunnable implements Runnable {
         @Override
@@ -6445,4 +6484,11 @@ public final class ViewRootImpl implements ViewParent,
             }
         }
     }
+    
+    /* valera begin */
+    public void setWindowManagerGlobalConfig(WindowManagerGlobal wmg, int index) {
+    	this.mWMG = wmg;
+    	this.mWMGIndex = index;
+    }
+    /* valera end */
 }

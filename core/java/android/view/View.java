@@ -4232,6 +4232,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *         otherwise is returned.
      */
     public boolean performClick() {
+    	/* valera begin */
+    	System.out.println("yhu009: View.performClick view=" + this.toString());
+    	/* valera end */
+    	
         sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED);
 
         ListenerInfo li = mListenerInfo;
@@ -8301,6 +8305,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      */
     public boolean onTouchEvent(MotionEvent event) {
         final int viewFlags = mViewFlags;
+        
+        /* valera begin */
+        Thread.currentThread().valeraDebugPrint(
+        		String.format("View.onTouchEvent mViewFlags=%x disable=%b",
+        		viewFlags, (viewFlags & ENABLED_MASK) == DISABLED));
+        /* valera end */
 
         if ((viewFlags & ENABLED_MASK) == DISABLED) {
             if (event.getAction() == MotionEvent.ACTION_UP && (mPrivateFlags & PFLAG_PRESSED) != 0) {
@@ -8323,6 +8333,11 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
             switch (event.getAction()) {
                 case MotionEvent.ACTION_UP:
                     boolean prepressed = (mPrivateFlags & PFLAG_PREPRESSED) != 0;
+                    /* valera begin */
+                    Thread.currentThread().valeraDebugPrint(
+                    		String.format("View.onTouchEvent ACTION_UP prepressed %b %b",
+                    		(mPrivateFlags & PFLAG_PRESSED) != 0, prepressed));
+                    /* valera end */
                     if ((mPrivateFlags & PFLAG_PRESSED) != 0 || prepressed) {
                         // take focus if we don't have it already and we should in
                         // touch mode.
@@ -8338,6 +8353,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                             // the user sees it.
                             setPressed(true);
                        }
+                        
+                        /* valera begin */
+                        Thread.currentThread().valeraDebugPrint(
+                        		String.format("View.onTouchEvent ACTION_UP focusTaken=%b",
+                        		focusTaken));
+                        /* valera end */
 
                         if (!mHasPerformedLongPress) {
                             // This is a tap, so remove the longpress check
@@ -8352,6 +8373,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                                     mPerformClick = new PerformClick();
                                 }
                                 if (!post(mPerformClick)) {
+                                	/* valera begin */
+                                    Thread.currentThread().valeraDebugPrint(
+                                    		"View.onTouchEvent ACTION_UP post performClick failed");
+                                    /* valera end */
                                     performClick();
                                 }
                             }
@@ -8381,6 +8406,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
                     // Walk up the hierarchy to determine if we're inside a scrolling container.
                     boolean isInScrollingContainer = isInScrollingContainer();
+                    
+                    /* valera begin */
+                    Thread.currentThread().valeraDebugPrint(
+                    		String.format("View.onTouchEvent ACTION_DOWN isInScrollingContainer=%b",
+                    				isInScrollingContainer));
+                    /* valera end */
 
                     // For views inside a scrolling container, delay the pressed feedback for
                     // a short period in case this is a scroll.

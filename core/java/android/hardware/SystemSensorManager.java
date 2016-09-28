@@ -29,6 +29,12 @@ import dalvik.system.CloseGuard;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+import libcore.valera.ValeraUtil;
+/* valera end */
+
 
 /**
  * Sensor manager implementation that communicates with the built-in
@@ -54,11 +60,28 @@ public class SystemSensorManager extends SensorManager {
     // Looper associated with the context in which this instance was created.
     private final Looper mMainLooper;
     private final int mTargetSdkLevel;
+    /* valera begin */
+    private final Context mContext;
+    /* valera end */
 
     /** {@hide} */
     public SystemSensorManager(Context context, Looper mainLooper) {
         mMainLooper = mainLooper;
         mTargetSdkLevel = context.getApplicationInfo().targetSdkVersion;
+        /* valera begin */
+        if (valera.ValeraGlobal.getValeraMode() != ValeraConstant.MODE_NONE) {
+        	/*
+        	libcore.valera.ValeraUtil.valeraAssert(
+        			context instanceof android.app.Activity,
+        			"Currently we only support getting SystemSensorManager from Activity"
+        			 + " context=" + context.toString());
+        	*/
+        	ValeraUtil.valeraDebugPrint("SystemSensorManager context=" + context.toString());
+        	mContext = context;
+        } else {
+        	mContext = null;
+        }
+        /* valera end */
         synchronized(sSensorModuleLock) {
             if (!sSensorModuleInitialized) {
                 sSensorModuleInitialized = true;
@@ -114,6 +137,12 @@ public class SystemSensorManager extends SensorManager {
                     return false;
                 }
                 mSensorListeners.put(listener, queue);
+                /* valera begin */
+                System.out.println("yhu009: registerListenerImpl " 
+                		+ Integer.toHexString(System.identityHashCode(this)) 
+                		+ " " + listener.toString()
+                		+ " " + mSensorListeners.size());
+                /* valera end */
                 return true;
             } else {
                 return queue.addSensor(sensor, delay);
@@ -141,6 +170,12 @@ public class SystemSensorManager extends SensorManager {
                 if (result && !queue.hasSensors()) {
                     mSensorListeners.remove(listener);
                     queue.dispose();
+                    /* valera begin */
+                    System.out.println("yhu009: unregisterListenerImpl " 
+                    		+ Integer.toHexString(System.identityHashCode(this)) 
+                    		+ " " + listener.toString()
+                    		+ " " + mSensorListeners.size());
+                    /* valera end */
                 }
             }
         }
@@ -194,6 +229,31 @@ public class SystemSensorManager extends SensorManager {
             return false;
         }
     }
+    
+    /* valera begin */
+    public SensorEventQueue getSensorEventQueueByListener(String listener) {
+    	SensorEventQueue ret = null;
+    	System.out.println("yhu009: getSensorEventQueue " 
+    			+ Integer.toHexString(System.identityHashCode(this))
+    			+ " " + mSensorListeners.size());
+    	for (Map.Entry<SensorEventListener, SensorEventQueue> entry : mSensorListeners.entrySet()) {
+    		SensorEventListener key = entry.getKey();
+    		System.out.println("yhu009: mSensorListeners " + listener);
+    		if (key.getClass().getName().equals(listener)) {
+    			// TODO: Currently we assume for sensor event listener, each listener class 
+    			// only have one instance. Otherwise, we need to apply the runtime object 
+    			// identification mechanism.
+    			libcore.valera.ValeraUtil.valeraAssert(ret == null, "Multiple objects with same SensorEventListener");
+    			ret = entry.getValue();
+    		}
+    	}
+    	return ret;
+    }
+    
+    public Context getContext() {
+    	return this.mContext;
+    }
+    /* valera end */
 
     /*
      * BaseEventQueue is the communication channel with the sensor service,
@@ -312,6 +372,9 @@ public class SystemSensorManager extends SensorManager {
         protected abstract void removeSensorEvent(Sensor sensor);
     }
 
+    /* valera begin */
+    public
+    /* valera end */
     static final class SensorEventQueue extends BaseEventQueue {
         private final SensorEventListener mListener;
         private final SparseArray<SensorEvent> mSensorsEvents = new SparseArray<SensorEvent>();
@@ -331,13 +394,10 @@ public class SystemSensorManager extends SensorManager {
         public void removeSensorEvent(Sensor sensor) {
             mSensorsEvents.delete(sensor.getHandle());
         }
-
-        // Called from native code.
-        @SuppressWarnings("unused")
-        @Override
-        protected void dispatchSensorEvent(int handle, float[] values, int inAccuracy,
-                long timestamp) {
-            final Sensor sensor = sHandleToSensor.get(handle);
+        
+        /* valera begin */
+        private void onSensorEvent(int handle, float[] values, int inAccuracy, long timestamp) {
+        	final Sensor sensor = sHandleToSensor.get(handle);
             SensorEvent t = mSensorsEvents.get(handle);
             if (t == null) {
                 Log.e(TAG, "Error: Sensor Event is null for Sensor: " + sensor);
@@ -370,6 +430,35 @@ public class SystemSensorManager extends SensorManager {
             }
             mListener.onSensorChanged(t);
         }
+        /* valera end */
+
+        // Called from native code.
+        @SuppressWarnings("unused")
+        @Override
+        protected void dispatchSensorEvent(int handle, float[] values, int inAccuracy,
+                long timestamp) {
+            /* valera begin */
+        	switch (valera.ValeraGlobal.getValeraMode()) {
+        	case ValeraConstant.MODE_NONE:
+        		onSensorEvent(handle, values, inAccuracy, timestamp);
+        		break;
+        	case ValeraConstant.MODE_RECORD:
+        		valera.ValeraInputEventManager.getInstance().recordSensorEvent(handle, 
+        				values, inAccuracy, timestamp, mListener, this.mManager);
+        		onSensorEvent(handle, values, inAccuracy, timestamp);
+        		break;
+        	case ValeraConstant.MODE_REPLAY:
+        		break;
+        	}
+        	/* valera end */
+        }
+        
+        /* valera begin */
+        public void valeraReplayFakeSensorEvent(int handle, float[] values, int inAccuracy,
+        		long timestamp) {
+        	onSensorEvent(handle, values, inAccuracy, timestamp);
+        }
+        /* valera end */
     }
 
     static final class TriggerEventQueue extends BaseEventQueue {

@@ -136,7 +136,14 @@ public abstract class DisplayEventReceiver {
     // Called from native code.
     @SuppressWarnings("unused")
     private void dispatchVsync(long timestampNanos, int builtInDisplayId, int frame) {
+    	/* valera begin */
+    	int msgId = valera.ValeraGlobal.generateMsgId();
+    	Thread.currentThread().valeraVsyncBegin(msgId);
+    	/* valera end */
         onVsync(timestampNanos, builtInDisplayId, frame);
+        /* valera begin */
+    	Thread.currentThread().valeraVsyncEnd(msgId);
+    	/* valera end */
     }
 
     // Called from native code.

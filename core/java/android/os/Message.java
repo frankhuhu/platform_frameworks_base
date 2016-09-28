@@ -30,6 +30,10 @@ import android.util.TimeUtils;
  * them from a pool of recycled objects.</p>
  */
 public final class Message implements Parcelable {
+	/* valera begin */
+	public int msgId = -1;
+	/* valera end */
+	
     /**
      * User-defined message code so that the recipient can identify 
      * what this message is about. Each {@link Handler} has its own name-space
@@ -110,6 +114,11 @@ public final class Message implements Parcelable {
                 sPool = m.next;
                 m.next = null;
                 sPoolSize--;
+                /* valera begin */
+                if (m.msgId == -1) {
+                	m.msgId = valera.ValeraGlobal.generateMsgId();
+                }
+            	/* valera end */
                 return m;
             }
         }
@@ -413,6 +422,9 @@ public final class Message implements Parcelable {
         target = null;
         callback = null;
         data = null;
+        /* valera begin */
+        msgId = -1;
+        /* valera end */
     }
 
     /*package*/ boolean isInUse() {
@@ -426,6 +438,9 @@ public final class Message implements Parcelable {
     /** Constructor (but the preferred way to get a Message is to call {@link #obtain() Message.obtain()}).
     */
     public Message() {
+    	/* valera begin */
+    	msgId = valera.ValeraGlobal.generateMsgId();
+    	/* valera end */
     }
 
     public String toString() {

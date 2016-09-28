@@ -16,14 +16,23 @@
 
 package android.media;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.IllegalArgumentException;
 import java.lang.IllegalStateException;
 import java.nio.ByteBuffer;
 
+import libcore.valera.ValeraConfig;
+import libcore.valera.ValeraConstant;
+import libcore.valera.ValeraIOManager;
+
+import valera.ValeraAudioManager;
+import valera.ValeraGlobal;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -588,8 +597,28 @@ public class AudioRecord
                 || (offsetInBytes + sizeInBytes > audioData.length)) {
             return ERROR_BAD_VALUE;
         }
-
-        return native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+        
+        /* valera begin */
+        int ret = -1;
+        
+        switch (Thread.currentThread().valeraGetMode()) {
+    	case ValeraConstant.MODE_NONE:
+    		ret = native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+    		break;
+    	case ValeraConstant.MODE_RECORD:
+        	long t1 = SystemClock.uptimeMillis();
+        	ret = native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+            long t2 = SystemClock.uptimeMillis();
+            ValeraAudioManager.getInstance().recordAudioReadByteArray(audioData, offsetInBytes, sizeInBytes, ret, t2-t1);
+            break;
+    	case ValeraConstant.MODE_REPLAY:
+    		// TODO: impl replay.
+    		ret = native_read_in_byte_array(audioData, offsetInBytes, sizeInBytes);
+    		break;
+    	}
+        
+        return ret;
+        /* valera end */
     }
 
 
@@ -612,8 +641,28 @@ public class AudioRecord
                 || (offsetInShorts + sizeInShorts > audioData.length)) {
             return ERROR_BAD_VALUE;
         }
-
-        return native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+        
+        /* valera begin */
+        int ret = -1;
+        
+        switch (Thread.currentThread().valeraGetMode()) {
+    	case ValeraConstant.MODE_NONE:
+    		ret = native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+    		break;
+    	case ValeraConstant.MODE_RECORD:
+        	long t1 = SystemClock.uptimeMillis();
+        	ret = native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+            long t2 = SystemClock.uptimeMillis();
+            ValeraAudioManager.getInstance().recordAudioReadShortArray(audioData, offsetInShorts, sizeInShorts, ret, t2-t1);
+            break;
+    	case ValeraConstant.MODE_REPLAY:
+    		// TODO: impl replay.
+    		ret = native_read_in_short_array(audioData, offsetInShorts, sizeInShorts);
+    		break;
+    	}
+        
+        return ret;
+        /* valera end */
     }
 
 
@@ -637,8 +686,28 @@ public class AudioRecord
         if ( (audioBuffer == null) || (sizeInBytes < 0) ) {
             return ERROR_BAD_VALUE;
         }
-
-        return native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+        
+        /* valera begin */
+        int ret = -1;
+        
+        switch (Thread.currentThread().valeraGetMode()) {
+    	case ValeraConstant.MODE_NONE:
+    		ret = native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+    		break;
+    	case ValeraConstant.MODE_RECORD:
+        	long t1 = SystemClock.uptimeMillis();
+        	ret = native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+            long t2 = SystemClock.uptimeMillis();
+            ValeraAudioManager.getInstance().recordAudioReadByteBuffer(audioBuffer, sizeInBytes, ret, t2-t1);
+            break;
+    	case ValeraConstant.MODE_REPLAY:
+    		// TODO: impl replay.
+    		ret = native_read_in_direct_buffer(audioBuffer, sizeInBytes);
+    		break;
+    	}
+        
+        return ret;
+        /* valera end */
     }
 
 

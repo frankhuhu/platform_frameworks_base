@@ -17108,6 +17108,7 @@ package android.os {
     ctor public Handler(android.os.Looper, android.os.Handler.Callback);
     method public void dispatchMessage(android.os.Message);
     method public final void dump(android.util.Printer, java.lang.String);
+    method public int getHandlerId();
     method public final android.os.Looper getLooper();
     method public java.lang.String getMessageName(android.os.Message);
     method public void handleMessage(android.os.Message);
@@ -17230,6 +17231,7 @@ package android.os {
     field public static final android.os.Parcelable.Creator CREATOR;
     field public int arg1;
     field public int arg2;
+    field public int msgId;
     field public java.lang.Object obj;
     field public android.os.Messenger replyTo;
     field public int what;
@@ -31477,6 +31479,7 @@ package java.io {
   public class BufferedInputStream extends java.io.FilterInputStream {
     ctor public BufferedInputStream(java.io.InputStream);
     ctor public BufferedInputStream(java.io.InputStream, int);
+    method public java.io.InputStream getInputStream();
     field protected volatile byte[] buf;
     field protected int count;
     field protected int marklimit;
@@ -32824,6 +32827,7 @@ package java.lang {
     method public java.lang.String getSimpleName();
     method public java.lang.Class<? super T> getSuperclass();
     method public synchronized java.lang.reflect.TypeVariable<java.lang.Class<T>>[] getTypeParameters();
+    method public int incAndGetCounter();
     method public boolean isAnnotation();
     method public boolean isAnnotationPresent(java.lang.Class<? extends java.lang.annotation.Annotation>);
     method public boolean isAnonymousClass();
@@ -33794,6 +33798,27 @@ package java.lang {
     method public final deprecated void stop();
     method public final deprecated synchronized void stop(java.lang.Throwable);
     method public final deprecated void suspend();
+    method public void valeraActionBegin(java.lang.String);
+    method public void valeraActionEnd(java.lang.String);
+    method public void valeraAttachQ(int);
+    method public void valeraBinderBegin(int, int, int, int);
+    method public void valeraBinderEnd(int, int, int, int);
+    method public void valeraBinderProxyBegin(java.lang.String);
+    method public void valeraBinderProxyEnd(java.lang.String);
+    method public void valeraDebugPrint(java.lang.String);
+    method public void valeraExitCleanUp();
+    method public int valeraGetMode();
+    method public int valeraGetThreadId();
+    method public void valeraInputEventBegin(int, java.lang.String);
+    method public void valeraInputEventEnd(int, java.lang.String);
+    method public boolean valeraIsEnabled();
+    method public boolean valeraIsTracing();
+    method public void valeraLifecycle(java.lang.String);
+    method public java.lang.String valeraPackageName();
+    method public void valeraPostMessage(java.lang.String);
+    method public void valeraSetTracing(boolean);
+    method public void valeraVsyncBegin(int);
+    method public void valeraVsyncEnd(int);
     method public static void yield();
     field public static final int MAX_PRIORITY = 10; // 0xa
     field public static final int MIN_PRIORITY = 1; // 0x1
@@ -46898,6 +46923,8 @@ package org.apache.http.impl {
     method public org.apache.http.HttpResponse receiveResponseHeader() throws org.apache.http.HttpException, java.io.IOException;
     method public void sendRequestEntity(org.apache.http.HttpEntityEnclosingRequest) throws org.apache.http.HttpException, java.io.IOException;
     method public void sendRequestHeader(org.apache.http.HttpRequest) throws org.apache.http.HttpException, java.io.IOException;
+    field public org.apache.http.io.SessionInputBuffer inbuffer;
+    field public org.apache.http.io.SessionOutputBuffer outbuffer;
   }
 
   public abstract class AbstractHttpServerConnection implements org.apache.http.HttpServerConnection {
@@ -46995,6 +47022,7 @@ package org.apache.http.impl {
     method public boolean isOpen();
     method public void setSocketTimeout(int);
     method public void shutdown() throws java.io.IOException;
+    field protected java.net.Socket socket;
   }
 
   public class SocketHttpServerConnection extends org.apache.http.impl.AbstractHttpServerConnection implements org.apache.http.HttpInetConnection {
@@ -47360,7 +47388,7 @@ package org.apache.http.impl.conn {
     method public int getRemotePort();
     method public javax.net.ssl.SSLSession getSSLSession();
     method public int getSocketTimeout();
-    method protected org.apache.http.conn.OperatedClientConnection getWrappedConnection();
+    method public org.apache.http.conn.OperatedClientConnection getWrappedConnection();
     method public boolean isMarkedReusable();
     method public boolean isOpen();
     method public boolean isResponseAvailable(int) throws java.io.IOException;
@@ -47504,7 +47532,7 @@ package org.apache.http.impl.conn {
     field protected org.apache.http.impl.conn.SingleClientConnManager.PoolEntry uniquePoolEntry;
   }
 
-  protected class SingleClientConnManager.ConnAdapter extends org.apache.http.impl.conn.AbstractPooledConnAdapter {
+  public class SingleClientConnManager.ConnAdapter extends org.apache.http.impl.conn.AbstractPooledConnAdapter {
     ctor protected SingleClientConnManager.ConnAdapter(org.apache.http.impl.conn.SingleClientConnManager.PoolEntry, org.apache.http.conn.routing.HttpRoute);
   }
 
@@ -47971,6 +47999,7 @@ package org.apache.http.impl.io {
     method public int read(byte[]) throws java.io.IOException;
     method public int readLine(org.apache.http.util.CharArrayBuffer) throws java.io.IOException;
     method public java.lang.String readLine() throws java.io.IOException;
+    field public java.io.InputStream instream;
   }
 
   public abstract class AbstractSessionOutputBuffer implements org.apache.http.io.SessionOutputBuffer {
@@ -47984,6 +48013,7 @@ package org.apache.http.impl.io {
     method public void write(int) throws java.io.IOException;
     method public void writeLine(java.lang.String) throws java.io.IOException;
     method public void writeLine(org.apache.http.util.CharArrayBuffer) throws java.io.IOException;
+    field public java.io.OutputStream outstream;
   }
 
   public class ChunkedInputStream extends java.io.InputStream {

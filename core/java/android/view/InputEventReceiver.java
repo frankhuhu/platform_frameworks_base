@@ -25,6 +25,12 @@ import android.util.SparseIntArray;
 
 import java.lang.ref.WeakReference;
 
+import valera.ValeraGlobal;
+import libcore.valera.ValeraConfig;
+/* valera begin */
+import libcore.valera.ValeraConstant;
+/* valera end */
+
 /**
  * Provides a low-level mechanism for an application to receive input events.
  * @hide
@@ -137,21 +143,31 @@ public abstract class InputEventReceiver {
      * @param handled True if the event was handled.
      */
     public final void finishInputEvent(InputEvent event, boolean handled) {
-        if (event == null) {
+    	if (event == null) {
             throw new IllegalArgumentException("event must not be null");
         }
         if (mReceiverPtr == 0) {
             Log.w(TAG, "Attempted to finish an input event but the input event "
                     + "receiver has already been disposed.");
         } else {
-            int index = mSeqMap.indexOfKey(event.getSequenceNumber());
-            if (index < 0) {
-                Log.w(TAG, "Attempted to finish an input event that is not in progress.");
-            } else {
-                int seq = mSeqMap.valueAt(index);
-                mSeqMap.removeAt(index);
-                nativeFinishInputEvent(mReceiverPtr, seq, handled);
-            }
+        	/* valera begin */
+        	int mode = valera.ValeraGlobal.getValeraMode();
+        	if (mode != ValeraConstant.MODE_REPLAY) {
+        		// In Valera replay mode, we do not need to send back native seq confirm.
+        	/* valera end */
+
+        		int index = mSeqMap.indexOfKey(event.getSequenceNumber());
+        		if (index < 0) {
+        			Log.w(TAG, "Attempted to finish an input event that is not in progress.");
+        		} else {
+        			int seq = mSeqMap.valueAt(index);
+        			mSeqMap.removeAt(index);
+        			nativeFinishInputEvent(mReceiverPtr, seq, handled);
+        		}
+            
+            /* valera begin */
+        	}
+            /* valera end */
         }
         event.recycleIfNeededAfterDispatch();
     }
@@ -178,8 +194,44 @@ public abstract class InputEventReceiver {
     // Called from native code.
     @SuppressWarnings("unused")
     private void dispatchInputEvent(int seq, InputEvent event) {
-        mSeqMap.put(event.getSequenceNumber(), seq);
-        onInputEvent(event);
+    	/* valera begin */
+    	int mode = valera.ValeraGlobal.getValeraMode();
+    	switch (mode) {
+    		case ValeraConstant.MODE_NONE:
+    		{
+    			/* valera end */
+    			mSeqMap.put(event.getSequenceNumber(), seq);
+    			onInputEvent(event);
+    			/* valera begin */
+    		}
+    		break;
+    		case ValeraConstant.MODE_RECORD:
+    		{
+    			// TODO: This is debug code
+    			System.out.println(String.format("yhu009: dispatchInputEvent %d %s %d %s", 
+        			ValeraGlobal.getRelativeTime(), this.toString(), seq, event.toString()));
+    			// Save events to log
+    			int msgId = valera.ValeraGlobal.generateMsgId();
+    			valera.ValeraInputEventManager.getInstance().recordInputEvent(msgId, this, event);
+    			valera.ValeraTrace.printInputEventBegin(msgId, event);
+    			// Enable tracing for input event.
+    			if (ValeraConfig.canTraceInputEvent())
+    				Thread.currentThread().valeraSetTracing(true);
+    			mSeqMap.put(event.getSequenceNumber(), seq);
+    			onInputEvent(event);
+    			// Disable tracing for input event after it finished.
+    			if (ValeraConfig.canTraceInputEvent())
+    				Thread.currentThread().valeraSetTracing(false);
+    			valera.ValeraTrace.printInputEventEnd(msgId, event);
+    		}
+    		break;
+    		case ValeraConstant.MODE_REPLAY:
+    		{
+    			// onInputEvent(event);
+    		}
+    		break;
+    	}
+    	/* valera end */
     }
 
     // Called from native code.
@@ -192,4 +244,29 @@ public abstract class InputEventReceiver {
         public InputEventReceiver createInputEventReceiver(
                 InputChannel inputChannel, Looper looper);
     }
+    
+    /* valera begin */
+    public String toString() {
+    	return "InputEventReceiver (" + getClass().getName() + ") {"
+    	        + Integer.toHexString(System.identityHashCode(this))
+    	        + "}";
+    }
+    
+    public void valeraReplayFakeInputEvent(InputEvent event) {
+		// TODO: This is debug code
+    	System.out.println(String.format("yhu009: replay event %s", 
+    			event.toString()));
+    	
+    	int msgId = valera.ValeraGlobal.generateMsgId();
+    	valera.ValeraTrace.printInputEventBegin(msgId, event);
+    	// Enable tracing for input event.
+    	if (ValeraConfig.canTraceInputEvent())
+    		Thread.currentThread().valeraSetTracing(true);
+    	onInputEvent(event);
+    	// Disable tracing for input event after it finished.
+    	if (ValeraConfig.canTraceInputEvent())
+    		Thread.currentThread().valeraSetTracing(false);
+    	valera.ValeraTrace.printInputEventEnd(msgId, event);
+    }
+    /* valera end */
 }

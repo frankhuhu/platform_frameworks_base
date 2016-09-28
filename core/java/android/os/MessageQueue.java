@@ -311,6 +311,10 @@ public final class MessageQueue {
                 Log.w("MessageQueue", e.getMessage(), e);
                 return false;
             }
+            
+            /* valera begin */
+        	valera.ValeraTrace.printPostMsg(msg);
+            /* valera end */
 
             msg.when = when;
             Message p = mMessages;
